@@ -1,0 +1,92 @@
+import java.util.Scanner;
+
+public class AirlineTicketBooking {
+    
+    // Flight class to store flight details
+    static class Flight {
+        String flightNumber;
+        String destination;
+        double price;
+        int availableSeats;
+
+        Flight(String flightNumber, String destination, double price, int availableSeats) {
+            this.flightNumber = flightNumber;
+            this.destination = destination;
+            this.price = price;
+            this.availableSeats = availableSeats;
+        }
+    }
+
+    // List of available flights
+    static Flight[] flights = {
+        new Flight("AI101", "New York", 500.0, 10),
+        new Flight("AI102", "London", 400.0, 5),
+        new Flight("AI103", "Paris", 300.0, 0),
+        new Flight("AI104", "Tokyo", 600.0, 2)
+    };
+
+    // Method to display available flights
+    public static void displayFlights() {
+        System.out.println("\nAvailable Flights:");
+        for (int i = 0; i < flights.length; i++) {
+            Flight flight = flights[i];
+            System.out.println((i + 1) + ". Flight Number: " + flight.flightNumber + 
+                               ", Destination: " + flight.destination + 
+                               ", Price: $" + flight.price + 
+                               ", Available Seats: " + flight.availableSeats);
+        }
+    }
+
+    // Method to book a ticket
+    public static void bookTicket(int flightIndex, int numSeats) {
+        Flight flight = flights[flightIndex];
+        
+        if (flight.availableSeats >= numSeats) {
+            flight.availableSeats -= numSeats;
+            System.out.println("\nTicket booked successfully!");
+            System.out.println("You booked " + numSeats + " seat(s) on Flight " + flight.flightNumber + " to " + flight.destination + ".");
+            System.out.println("Total Price: $" + (flight.price * numSeats));
+            System.out.println("Remaining seats: " + flight.availableSeats);
+        } else {
+            System.out.println("\nSorry, not enough seats available.");
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        
+        while (true) {
+            System.out.println("\n---- Airline Ticket Booking System ----");
+            System.out.println("1. Display Available Flights");
+            System.out.println("2. Book a Ticket");
+            System.out.println("3. Exit");
+            System.out.print("Enter your choice: ");
+            int choice = scanner.nextInt();
+
+            switch (choice) {
+                case 1:
+                    displayFlights();
+                    break;
+                case 2:
+                    displayFlights();
+                    System.out.print("\nEnter the flight number (1-4): ");
+                    int flightChoice = scanner.nextInt();
+                    if (flightChoice < 1 || flightChoice > flights.length) {
+                        System.out.println("Invalid flight choice.");
+                        break;
+                    }
+
+                    System.out.print("Enter number of seats to book: ");
+                    int numSeats = scanner.nextInt();
+                    bookTicket(flightChoice - 1, numSeats);
+                    break;
+                case 3:
+                    System.out.println("Thank you for using the Airline Ticket Booking System. Goodbye!");
+                    scanner.close();
+                    return;
+                default:
+                    System.out.println("Invalid choice! Please try again.");
+            }
+        }
+    }
+}
