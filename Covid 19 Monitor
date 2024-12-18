@@ -1,0 +1,88 @@
+import org.opencv.core.*;
+import org.opencv.videoio.VideoCapture;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.objdetect.CascadeClassifier;
+import org.opencv.core.CvType;
+import ai.djl.Application;
+import ai.djl.ModelException;
+import ai.djl.inference.Predictor;
+import ai.djl.modality.Classifications;
+import ai.djl.translate.TranslateException;
+import ai.djl.util.Utils;
+
+import java.io.IOException;
+
+public class MaskDetection {
+
+    static {
+        // Load OpenCV library
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    }
+
+    public static void main(String[] args) throws IOException, ModelException, TranslateException {
+        // Load pre-trained model for mask detection
+        String modelPath = "path_to_your_model"; // replace with your model path
+        ai.djl.Application application = Application.CV.IMAGE_CLASSIFICATION;
+        ai.djl.Model model = ai.djl.ModelException.loadModel(modelPath);
+        Predictor<Mat, Classifications> predictor = model.newPredictor();
+
+        // Start video capture
+        VideoCapture capture = new VideoCapture(0); // 0 for default camera
+        if (!capture.isOpened()) {
+            System.out.println("Error: Camera not found.");
+            return;
+        }
+
+        // Initialize face detector (Haar Cascade for face detection)
+        CascadeClassifier faceDetector = new CascadeClassifier("haarcascade_frontalface_default.xml");
+
+        Mat frame = new Mat();
+        while (true) {
+            // Capture each frame
+            capture.read(frame);
+
+            if (frame.empty()) {
+                break;
+            }
+
+            // Convert the frame to grayscale for face detection
+            Mat grayFrame = new Mat();
+            Imgproc.cvtColor(frame, grayFrame, Imgproc.COLOR_BGR2GRAY);
+
+            // Detect faces
+            RectVector faces = new RectVector();
+            faceDetector.detectMultiScale(grayFrame, faces);
+
+            // Iterate through detected faces
+            for (int i = 0; i < faces.size(); i++) {
+                Rect face = faces.get(i);
+                // Draw rectangle around face
+                Imgproc.rectangle(frame, face.tl(), face.br(), new Scalar(0, 255, 0), 2);
+
+                // Extract face region for mask detection
+                Mat faceROI = new Mat(frame, face);
+                // Preprocess face image (resize to model input size, normalize, etc.)
+
+                // Get the mask prediction
+                Classifications predictions = predictor.predict(faceROI);
+                String prediction = predictions.best().getClassName();
+
+                // Display the prediction result (Mask or No Mask)
+                String result = prediction.equals("mask") ? "Mask" : "No Mask";
+                Imgproc.putText(frame, result, new Point(face.x, face.y - 10),
+                        Imgproc.FONT_HERSHEY_SIMPLEX, 0.9, new Scalar(0, 255, 0), 2);
+
+            }
+
+            // Display the processed frame
+            HighGui.imshow("Mask Detection", frame);
+            if (HighGui.waitKey(1) == 27) { // Press 'Esc' to quit
+                break;
+            }
+        }
+
+        // Release resources
+        capture.release();
+        HighGui.destroyAllWindows();
+    }
+}
